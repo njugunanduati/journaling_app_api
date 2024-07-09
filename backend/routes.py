@@ -32,8 +32,11 @@ def login():
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
+
+        print('username: %s' % len(username))
         
         user = User.query.filter_by(username=username).first()
+        print('user ==== ', user)
         if not user or not verify_password(password, user.password):
             return jsonify({'error': 'Invalid credentials'}), 401
 
@@ -74,19 +77,31 @@ def get_entries():
         'date': entry.date
     } for entry in entries]), 200
 
-
-@api.route('/entry/<int:id>', methods=['GET'])
+# update the user entry
+@api.route('/entries/update/<int:entry_id>', methods=['PUT'])
 @jwt_required()
-def get_entry(id):
+def update_entry(entry_id):
     user_id = get_jwt_identity()
-    if id == user_id:
-        entries = JournalEntry.query.filter_by(user_id=user_id).all()
-        return jsonify([{
-            'id': entry.id,
-            'title': entry.title,
-            'content': entry.content,
-            'category': entry.category,
-            'date': entry.date
-        } for entry in entries]), 200
+    entry = JournalEntry.query.get_or_404(entry_id)
+    if entry.user_id == user_id:
+        data = request.get_json()
+        entry.title = data.get('title', entry.title)
+        entry.content = data.get('content', entry.content)
+        entry.category = data.get('category', entry.category)
+        db.session.commit()
+        return jsonify({'message': 'Entry updated successfully'}), 200
+    else:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+# delete the user entry
+@api.route('/entries/delete/<int:entry_id>', methods=['DELETE'])
+@jwt_required()
+def delete_entry(entry_id):
+    user_id = get_jwt_identity()
+    entry = JournalEntry.query.get_or_404(entry_id)
+    if entry.user_id == user_id:
+        db.session.delete(entry)
+        db.session.commit()
+        return jsonify({'message': 'Entry deleted successfully'}), 200
     else:
         return jsonify({'error': 'Unauthorized'}), 401
