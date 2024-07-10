@@ -9,18 +9,23 @@ api = Blueprint('api', __name__)
 def register():
     try:
         data = request.get_json()
-        username = data.get('username')
+        first_name = data.get('firstName') 
+        last_name = data.get('lastName')
+        email = data.get('email')
         password = data.get('password')
         print('password: %s' % password)
         
-        if User.query.filter_by(username=username).first():
+        if User.query.filter_by(email=email).first():
             return jsonify({'error': 'User already exists'}), 400
 
-        user = User(username=username, password=hash_password(password))
-        print('user: %s' % user)
+        user = User(
+            first_name=first_name,
+            last_name=last_name,
+            email=email, 
+            password=hash_password(password)
+        )
         db.session.add(user)
         db.session.commit()
-        print('am here already')
         return jsonify({'message': 'User registered successfully'}), 201
     except Exception as e:
         print('error: %s' % e)
@@ -30,13 +35,10 @@ def register():
 def login():
     try:
         data = request.get_json()
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
-
-        print('username: %s' % len(username))
         
-        user = User.query.filter_by(username=username).first()
-        print('user ==== ', user)
+        user = User.query.filter_by(email=email).first()
         if not user or not verify_password(password, user.password):
             return jsonify({'error': 'Invalid credentials'}), 401
 
@@ -45,12 +47,41 @@ def login():
     except Exception as e:
         return jsonify({'error': f'Error: {e}'}), 400
 
+@api.route('/profile', methods=['GET'])
+@jwt_required()
+def get_profile():
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get_or_404(user_id)
+        return jsonify({
+            'id': user.id,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Error: {e}'}), 400
+
+# update profile
+@api.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_profile():
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        user = User.query.get_or_404(user_id)
+        user.first_name = data.get('first_name', user.first_name)
+        user.last_name = data.get('last_name', user.last_name)
+        db.session.commit()
+        return jsonify({'message': 'Profile updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Error: {e}'}), 400
+
 @api.route('/entries', methods=['POST'])
 @jwt_required()
 def add_entry():
     try:
         user_id = get_jwt_identity()
-        print('user_id', user_id)
         data = request.get_json()
         entry = JournalEntry(
             title=data.get('title'),

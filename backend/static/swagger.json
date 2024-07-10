@@ -1,0 +1,64 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "title": "Journal Application Api",
+      "version": "1.0.0"
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "description": "Returns message showing app is up",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                    "description": "Successful operation"
+                    }
+                }
+            }
+        },
+        "api/login": {
+            "post": {
+                "description": "Login endpoint",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User logged in successfully",
+                        "schema": {
+                            
+                            "$ref": "User"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid username or password"
+                    }
+                }
+            }
+        }
+    
+    }
+}

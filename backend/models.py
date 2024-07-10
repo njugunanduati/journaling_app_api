@@ -5,8 +5,12 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(300), unique=True, nullable=False)
+    first_name = db.Column(db.String(100), nullable=True)
+    last_name = db.Column(db.String(100), nullable=True)
     password = db.Column(db.String(300), nullable=False)
+    reset_password_token = db.Column(db.String(255), nullable=True)
+    reset_password_expires = db.Column(db.String(255), nullable=True)
     entries = db.relationship('JournalEntry', backref='author', lazy=True)
 
 class JournalEntry(db.Model):
